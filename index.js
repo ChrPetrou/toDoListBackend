@@ -53,7 +53,7 @@ app.get("/todo-list/:id", (req, res) => {
   const toDoItem = toDoList.find((a) => a.id === req.params.id);
 
   if (!toDoItem) {
-    res.status(404).json({ message: "Data not found" });
+    res.status(404).json({ message: "Data not found!" });
     return;
   }
   res.status(200).json(toDoItem);
