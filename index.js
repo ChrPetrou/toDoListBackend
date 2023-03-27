@@ -68,7 +68,7 @@ app.post("/todo-list", (req, res) => {
   }
 
   const newToDoItem = {
-    id: Math.floor(Math.random() * 10000000),
+    id: Math.floor(Math.random() * 10000000).toString(),
     text: value.text,
     isCompleted: false,
   };
