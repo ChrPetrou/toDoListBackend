@@ -1,40 +1,19 @@
 const express = require("express");
 const app = express();
-const PORT = 4000;
 app.use(express.json());
 const Joi = require("joi");
-
+require("dotenv").config();
 var cors = require("cors");
-
+const mongoose = require("mongoose");
+const PORT = 4000;
+const TodoItemsModel = require("../backend/models/todoList");
+const todoListModel = require("../backend/models/todoList");
 app.use(cors());
 
-let toDoList = [
-  {
-    id: "1", // unique id (random number)
-    text: "Buy milk", // text of the todoItem
-    isCompleted: false, // boolean indicating if the todoItem is completed or not
-  },
-  {
-    id: "2", // unique id (random number)
-    text: "Buy water", // text of the todoItem
-    isCompleted: false, // boolean indicating if the todoItem is completed or not
-  },
-  {
-    id: "3", // unique id (random number)
-    text: "Buy soya", // text of the todoItem
-    isCompleted: false, // boolean indicating if the todoItem is completed or not
-  },
-  {
-    id: "4", // unique id (random number)
-    text: "Buy kreparoli", // text of the todoItem
-    isCompleted: false, // boolean indicating if the todoItem is completed or not
-  },
-  {
-    id: "5", // unique id (random number)
-    text: "Buy pipilo", // text of the todoItem
-    isCompleted: false, // boolean indicating if the todoItem is completed or not
-  },
-];
+const connection = mongoose
+  .connect(process.env.MONGODB_URI)
+  .then(() => console.log("Connected!"))
+  .catch((err) => console.log("Connection Error:", err));
 
 const schemaCreate = Joi.object().keys({
   text: Joi.string().required(),
@@ -45,13 +24,13 @@ const schemaUpdate = Joi.object().keys({
   isCompleted: Joi.boolean(),
 });
 
-app.get("/todo-list", (req, res) => {
-  res.status(200).json(toDoList);
+app.get("/todo-list", async (req, res) => {
+  const toDoList2 = await TodoItemsModel.find();
+  res.status(200).json(toDoList2);
 });
 
-app.get("/todo-list/:id", (req, res) => {
-  const toDoItem = toDoList.find((a) => a.id === req.params.id);
-
+app.get("/todo-list/:id", async (req, res) => {
+  const toDoItem = await TodoItemsModel.findById(req.params.id);
   if (!toDoItem) {
     res.status(404).json({ message: "Data not found!" });
     return;
@@ -59,7 +38,7 @@ app.get("/todo-list/:id", (req, res) => {
   res.status(200).json(toDoItem);
 });
 
-app.post("/todo-list", (req, res) => {
+app.post("/todo-list", async (req, res) => {
   const { value, error } = schemaCreate.validate(req.body);
 
   if (error) {
@@ -67,53 +46,51 @@ app.post("/todo-list", (req, res) => {
     return;
   }
 
-  const newToDoItem = {
-    id: Math.floor(Math.random() * 10000000).toString(),
+  const newToDoItem = await TodoItemsModel.create({
     text: value.text,
     isCompleted: false,
-  };
-
-  toDoList.push(newToDoItem);
+  });
 
   res.status(202).json(newToDoItem);
 });
 
-app.patch("/todo-list/:id", (req, res) => {
+app.patch("/todo-list/:id", async (req, res) => {
   const { error, value } = schemaUpdate.validate(req.body);
 
   if (error) {
     res.status(400).json(error);
     return;
   }
+  let obj = await TodoItemsModel.findById(req.params.id).catch((err) => {});
 
-  let index = toDoList.findIndex((a, b) => a.id === req.params.id);
-
-  if (index === -1) {
-    res.status(404).json({ message: "Data not found" });
+  if (!obj) {
+    res.status(404).json({ message: "Todo with that id not found" });
     return;
   }
 
-  toDoList[index] = {
-    ...toDoList[index],
-    ...value,
-  };
+  const newToDoItem = await TodoItemsModel.findByIdAndUpdate(
+    obj._id,
+    {
+      text: value.text,
+      isCompleted: value.isCompleted,
+    },
+    { returnDocument: "after" }
+  );
 
-  res.status(202).json(toDoList[index]);
-});
-
-app.delete("/todo-list/:id", (req, res) => {
-  let newToDoItem;
-  toDoList = toDoList.filter((a) => {
-    if (a.id === req.params.id) newToDoItem = a;
-    return a.id !== req.params.id;
-  });
-
-  if (!newToDoItem) {
-    res.status(404).json({ message: "Data not found" });
-    return;
-  }
+  console.log(newToDoItem);
 
   res.status(202).json(newToDoItem);
+});
+
+app.delete("/todo-list/:id", async (req, res) => {
+  const obj = await todoListModel.findById(req.params.id).catch((err) => {});
+
+  if (!obj) {
+    res.status(404).json({ message: "Data not found" });
+    return;
+  }
+  const deletedToDoItem = await TodoItemsModel.findByIdAndDelete(obj.id);
+  res.status(202).json(deletedToDoItem);
 });
 
 app.listen(PORT, () => {
