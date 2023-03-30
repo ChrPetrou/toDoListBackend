@@ -1,21 +1,28 @@
 const express = require("express");
-const app = express();
-app.use(express.json());
+
 require("dotenv").config();
 var cors = require("cors");
 const mongoose = require("mongoose");
 const todoItems = require("./routes/todo.js");
+const users = require("./routes/users");
 const PORT = 4000;
 
-app.use(cors());
+const main = async () => {
+  const app = express();
+  app.use(express.json());
 
-const connection = mongoose
-  .connect(process.env.MONGODB_URI)
-  .then(() => console.log("Connected!"))
-  .catch((err) => console.log("Connection Error:", err));
+  app.use(cors());
 
-app.use("/todo-list", todoItems);
+  await mongoose.connect(process.env.MONGODB_URI);
+  console.log("Connected!");
 
-app.listen(PORT, () => {
-  console.log(`Server started on port http://localhost:${PORT}`);
-});
+  app.use("/todo-list", todoItems);
+
+  app.use("/users", users);
+
+  app.listen(PORT, () => {
+    console.log(`Server started on port http://localhost:${PORT}`);
+  });
+};
+
+main();

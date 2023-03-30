@@ -1,4 +1,6 @@
-const TodoItemsModel = require("../models/todoList");
+const TodoItemsModel = require("../models/todoModel");
+const tokenModel = require("../models/tokenModel");
+const { tokenFunction } = require("../middleware");
 const Joi = require("joi");
 const express = require("express");
 var router = express.Router();
@@ -12,9 +14,11 @@ const schemaUpdate = Joi.object().keys({
   isCompleted: Joi.boolean(),
 });
 
-router.get("/", async (req, res) => {
-  const toDoList = await TodoItemsModel.find();
-  res.status(200).json(toDoList);
+// accept request
+router.get("/", tokenFunction, async (req, res) => {
+  console.log(req.user);
+  const toDoList = await TodoItemsModel.find({ user_id: req.user._id });
+  res.status(200).json(toDoList); // send response
 });
 
 router.get("/:id", async (req, res) => {
@@ -37,6 +41,7 @@ router.post("/", async (req, res) => {
   const newToDoItem = await TodoItemsModel.create({
     text: value.text,
     isCompleted: false,
+    // user_id: token.user_id,
   });
 
   res.status(202).json(newToDoItem);
