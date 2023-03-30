@@ -8,7 +8,6 @@ module.exports = {
       res.status(400).json({ message: "Invalid authorization header" });
       return;
     }
-    console.log(tokenTest);
     const token = await tokenModel
       .findOne({ token_id: tokenTest })
       .populate("user_id")

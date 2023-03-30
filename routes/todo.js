@@ -16,13 +16,15 @@ const schemaUpdate = Joi.object().keys({
 
 // accept request
 router.get("/", tokenFunction, async (req, res) => {
-  console.log(req.user);
   const toDoList = await TodoItemsModel.find({ user_id: req.user._id });
   res.status(200).json(toDoList); // send response
 });
 
-router.get("/:id", async (req, res) => {
-  const toDoItem = await TodoItemsModel.findById(req.params.id);
+router.get("/:id", tokenFunction, async (req, res) => {
+  const toDoItem = await TodoItemsModel.find({
+    _id: req.params.id,
+    user_id: req.user._id,
+  });
   if (!toDoItem) {
     res.status(404).json({ message: "Data not found!" });
     return;
@@ -30,7 +32,7 @@ router.get("/:id", async (req, res) => {
   res.status(200).json(toDoItem);
 });
 
-router.post("/", async (req, res) => {
+router.post("/", tokenFunction, async (req, res) => {
   const { value, error } = schemaCreate.validate(req.body);
 
   if (error) {
@@ -41,13 +43,13 @@ router.post("/", async (req, res) => {
   const newToDoItem = await TodoItemsModel.create({
     text: value.text,
     isCompleted: false,
-    // user_id: token.user_id,
+    user_id: req.user._id,
   });
 
   res.status(202).json(newToDoItem);
 });
 
-router.patch("/:id", async (req, res) => {
+router.patch("/:id", tokenFunction, async (req, res) => {
   const { error, value } = schemaUpdate.validate(req.body);
 
   if (error) {
