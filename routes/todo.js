@@ -56,7 +56,10 @@ router.patch("/:id", tokenFunction, async (req, res) => {
     res.status(400).json(error);
     return;
   }
-  let obj = await TodoItemsModel.findById(req.params.id).catch((err) => {});
+  let obj = await TodoItemsModel.findOne({
+    _id: req.params.id,
+    user_id: req.user._id,
+  }).catch((err) => {});
 
   if (!obj) {
     res.status(404).json({ message: "Todo with that id not found" });
@@ -77,8 +80,11 @@ router.patch("/:id", tokenFunction, async (req, res) => {
   res.status(202).json(newToDoItem);
 });
 
-router.delete("/:id", async (req, res) => {
-  const obj = await todoListModel.findById(req.params.id).catch((err) => {});
+router.delete("/:id", tokenFunction, async (req, res) => {
+  let obj = await TodoItemsModel.findOne({
+    _id: req.params.id,
+    user_id: req.user._id,
+  }).catch((err) => {});
 
   if (!obj) {
     res.status(404).json({ message: "Data not found" });

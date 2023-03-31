@@ -14,13 +14,6 @@ const schemaCreateUser = Joi.object().keys({
   password: Joi.string().required(),
 });
 
-const schemaLogInUser = Joi.object().keys({
-  email: Joi.string()
-    .email({ tlds: { allow: ["com", "net"] } })
-    .required(),
-  password: Joi.string().required(),
-});
-
 router.post("/sign-in/:id", async (req, res) => {
   const { value, error } = schemaCreateUser.validate(req.body);
 
