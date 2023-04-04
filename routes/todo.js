@@ -1,6 +1,6 @@
 const TodoItemsModel = require("../models/todoModel");
 const tokenModel = require("../models/tokenModel");
-const { tokenFunction } = require("../middleware");
+const { authMiddleware } = require("../middleware");
 const Joi = require("joi");
 const express = require("express");
 var router = express.Router();
@@ -15,12 +15,12 @@ const schemaUpdate = Joi.object().keys({
 });
 
 // accept request
-router.get("/", tokenFunction, async (req, res) => {
+router.get("/", authMiddleware, async (req, res) => {
   const toDoList = await TodoItemsModel.find({ user_id: req.user._id });
   res.status(200).json(toDoList); // send response
 });
 
-router.get("/:id", tokenFunction, async (req, res) => {
+router.get("/:id", authMiddleware, async (req, res) => {
   const toDoItem = await TodoItemsModel.find({
     _id: req.params.id,
     user_id: req.user._id,
@@ -32,7 +32,7 @@ router.get("/:id", tokenFunction, async (req, res) => {
   res.status(200).json(toDoItem);
 });
 
-router.post("/", tokenFunction, async (req, res) => {
+router.post("/", authMiddleware, async (req, res) => {
   const { value, error } = schemaCreate.validate(req.body);
 
   if (error) {
@@ -49,7 +49,7 @@ router.post("/", tokenFunction, async (req, res) => {
   res.status(202).json(newToDoItem);
 });
 
-router.patch("/:id", tokenFunction, async (req, res) => {
+router.patch("/:id", authMiddleware, async (req, res) => {
   const { error, value } = schemaUpdate.validate(req.body);
 
   if (error) {
@@ -75,12 +75,10 @@ router.patch("/:id", tokenFunction, async (req, res) => {
     { returnDocument: "after" }
   );
 
-  console.log(newToDoItem);
-
   res.status(202).json(newToDoItem);
 });
 
-router.delete("/:id", tokenFunction, async (req, res) => {
+router.delete("/:id", authMiddleware, async (req, res) => {
   let obj = await TodoItemsModel.findOne({
     _id: req.params.id,
     user_id: req.user._id,

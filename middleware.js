@@ -1,8 +1,8 @@
 const tokenModel = require("./models/tokenModel");
 
 module.exports = {
-  tokenFunction: async function (req, res, next) {
-    const authorization = req.headers?.authorization;
+  authMiddleware: async function (req, res, next) {
+    const authorization = await req.headers?.authorization;
     let tokenTest = null;
     if (authorization) tokenTest = authorization.split(" ")[1];
     if (!tokenTest) {
@@ -19,11 +19,11 @@ module.exports = {
       res.status(404).json({ message: "Token expired" });
       return;
     }
-
+    // na min ginete update me kathe request
     await tokenModel.updateOne(
       { token_id: token.token_id },
       {
-        expire_at: Date.now() + 1000 * 60 * 10,
+        expire_at: Date.now() + 1000 * 60 * 60 * 60 * 24,
       }
     );
 

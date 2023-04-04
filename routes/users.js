@@ -14,7 +14,7 @@ const schemaCreateUser = Joi.object().keys({
   password: Joi.string().required(),
 });
 
-router.post("/sign-in/:id", async (req, res) => {
+router.post("/sign-in/", async (req, res) => {
   const { value, error } = schemaCreateUser.validate(req.body);
 
   if (error) {
@@ -24,7 +24,6 @@ router.post("/sign-in/:id", async (req, res) => {
   let user = await userModel
     .findOne({
       email: value.email,
-      _id: req.params.id,
     })
     .catch((err) => {});
 
@@ -32,26 +31,38 @@ router.post("/sign-in/:id", async (req, res) => {
     res.status(404).json({ message: "User not found" });
     return;
   }
-
-  const newdate = Date.now() + 1000 * 60 * 10;
-
-  const countUserTokens = await tokenModel.count({ user_id: user._id });
-  if (countUserTokens > 3) {
-    res.status(409).json({ message: "To many devices connecter" });
+  const cmp = await bcrypt.compare(req.body.password, user.password);
+  if (!cmp) {
+    res.status(404).json({ message: "Passwords not match" });
     return;
   }
 
-  const token = await tokenModel
-    .create({
-      user_id: user._id,
-      token_id: randomToken(64),
-      expire_at: newdate,
-    })
-    .catch((err) => {});
+  const newdate = Date.now() + 1000 * 60 * 60 * 60 * 24;
+  let token;
+  const countUserTokens = await tokenModel.count({ user_id: user._id });
+  // if the user already has 3 tokens just updates one of them else create another
+  if (countUserTokens >= 3) {
+    token = await tokenModel.findOneAndUpdate(
+      { user_id: user._id },
+      {
+        token_id: randomToken(64),
+        expire_at: newdate,
+      },
+      { sort: { expire_at: 1 }, returnOriginal: false }
+    );
+  } else {
+    token = await tokenModel
+      .create({
+        user_id: user._id,
+        token_id: randomToken(64),
+        expire_at: newdate,
+      })
+      .catch((err) => {});
 
-  if (!token) {
-    res.status(500).json();
-    return;
+    if (!token) {
+      res.status(500).json();
+      return;
+    }
   }
 
   user = user.toJSON();
