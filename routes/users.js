@@ -7,15 +7,23 @@ const randomToken = require("random-token");
 const userModel = require("../models/userModel");
 const tokenModel = require("../models/tokenModel");
 
-const schemaCreateUser = Joi.object().keys({
+const schemaSignInUser = Joi.object().keys({
   email: Joi.string()
     .email({ tlds: { allow: ["com", "net"] } })
     .required(),
   password: Joi.string().required(),
 });
 
+const schemaCreateUser = Joi.object().keys({
+  email: Joi.string()
+    .email({ tlds: { allow: ["com", "net"] } })
+    .required(),
+  password: Joi.string().required(),
+  confirmPassword: Joi.string().valid(Joi.ref("password")).required(),
+});
+
 router.post("/sign-in/", async (req, res) => {
-  const { value, error } = schemaCreateUser.validate(req.body);
+  const { value, error } = schemaSignInUser.validate(req.body);
 
   if (error) {
     res.status(400).json(error);
@@ -95,7 +103,7 @@ router.post("/register", async (req, res) => {
     return;
   }
 
-  const newdate = Date.now() + 1000 * 60;
+  const newdate = Date.now() + 1000 * 60 * 60 * 60 * 24;
 
   const newToken = await tokenModel.create({
     user_id: newUser._id,

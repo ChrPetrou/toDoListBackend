@@ -1,5 +1,5 @@
 const TodoItemsModel = require("../models/todoModel");
-const tokenModel = require("../models/tokenModel");
+
 const { authMiddleware } = require("../middleware");
 const Joi = require("joi");
 const express = require("express");
