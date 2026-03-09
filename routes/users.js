@@ -56,7 +56,7 @@ router.post("/sign-in/", async (req, res) => {
         token_id: randomToken(64),
         expire_at: newdate,
       },
-      { sort: { expire_at: 1 }, returnOriginal: false }
+      { sort: { expire_at: 1 }, returnOriginal: false },
     );
   } else {
     token = await tokenModel
@@ -114,8 +114,8 @@ router.post("/register", async (req, res) => {
   delete user.password;
   res.status(201).json({
     user: user,
-    token_id: newToken.token_id,
-    expire_at: newToken.expire_at,
+    TokenId: newToken.token_id,
+    tokenExpire: newToken.expire_at,
   });
 });
 
